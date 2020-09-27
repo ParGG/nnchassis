@@ -12,8 +12,8 @@ class Chassis(nn.Module):
   """
   def __init__(self):
     super().__init__()
-    self.optimizer = th.optim.SGD(lr=0.01)
-    self.lossfn = nn.MSELoss
+    # self.optimizer = [] th.optim.SGD(lr=0.01)
+    # self.lossfn = nn.MSELoss
 
   def print_line(self):
     print("-"*80)
