@@ -12,15 +12,15 @@ class Mnist1DTransform(object):
   def __call__(self, sample):
     return th.reshape(sample, [28*28])
 
-def gen_dataloaders(data_ops):
-    train_dataset = torchvision.datasets.MNIST(root='.', 
+def gen_dataloaders(data_ops, root_path = '.'):
+    train_dataset = torchvision.datasets.MNIST(root=root_path, 
                                             train=True, 
                                             download=True,
                                             transform=transforms.Compose(data_ops))
 
     train_dataloader = utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-    val_dataset = torchvision.datasets.MNIST(root='.', 
+    val_dataset = torchvision.datasets.MNIST(root=root_path, 
                                             train=False, 
                                             download=True,
                                             transform=transforms.Compose(data_ops))
@@ -37,4 +37,4 @@ def mnist_gen(flatten=False):
         data_ops =[transforms.ToTensor(), Mnist1DTransform()]
     else:
         data_ops = [transforms.ToTensor()]
-    return gen_dataloaders(data_ops)
+    return gen_dataloaders(data_ops, root_path='./dataset/.')
