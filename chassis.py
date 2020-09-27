@@ -12,8 +12,8 @@ class Chassis(nn.Module):
   """
   def __init__(self):
     super().__init__()
-    self.optimizer = []
-    self.lossfn = []
+    self.optimizer = nn.optim.SGD(lr=0.01)
+    self.lossfn = nn.MSELoss
 
   def print_line(self):
     print("-"*80)
@@ -57,7 +57,7 @@ class Chassis(nn.Module):
   def train_epoch(self, nbatches, train_dataloader, val_dataloader):
     batch_progress_bar = tqdm(range(nbatches), desc="Batch status", leave=False)
     acc = 0
-    for idx in batch_progress_bar:
+    for _ in batch_progress_bar:
       train_data = next(iter(train_dataloader))
       val_data = next(iter(val_dataloader))
       train_loss = self.train_batch(train_data)
@@ -72,7 +72,7 @@ class Chassis(nn.Module):
     """
     Overload in the subclass
     """
-    self.print_line("NOTE: accuracy function should be defined in the model file")
+    self.print_message("NOTE: accuracy function should be defined in the model file")
     return 0
 
 
@@ -82,7 +82,7 @@ class Chassis(nn.Module):
     self.print_message("Starting training")
     epoch_progress_bar = tqdm(range(nepochs), desc="Epoch status: Acc=?", leave=True)
 
-    for idx in epoch_progress_bar:
+    for _ in epoch_progress_bar:
       acc = self.train_epoch(nbatches, train_dataloader, val_dataloader)
       epoch_desc = f"Current accuracy: {acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
