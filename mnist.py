@@ -31,7 +31,7 @@ def gen_dataloaders(data_ops):
 
 def mnist_gen(flatten=False):
     """
-    Flatten = false will reshape images to be a 1D vector. Use for sequential MNIST
+    Flatten = false will reshape images to be a 1D vector. Ex use for sequential MNIST.
     """
     if flatten:
         data_ops =[transforms.ToTensor(), Mnist1DTransform()]
