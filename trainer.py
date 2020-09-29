@@ -1,19 +1,28 @@
 # For neural network
+from typing import NewType
 import torch as th
 import torch.nn as nn
 from tqdm.auto import tqdm
 from prettytable import PrettyTable
 from collections import OrderedDict
 
+# TODO
+# 1. Add plotting functions to track progress of accuracy and loss
 
-class Chassis(nn.Module):
+# Add callbacks to enable
+# 1. Early stopping
+# 2. Learning rate scheduler
+# 3. Save model 
+# 4. Reload model
+# 5. Change generator properties
+
+class Trainer(object):
   """
   Base NN class implements training functions
   """
-  def __init__(self):
+  def __init__(self, net):
     super().__init__()
-    # self.optimizer = [] th.optim.SGD(lr=0.01)
-    # self.lossfn = nn.MSELoss
+    self.net = net 
 
   def print_line(self):
     print("-"*80)
@@ -24,11 +33,11 @@ class Chassis(nn.Module):
     self.print_line()
 
   def print_net_params(self):
-    self.print_message(f"{self.name} network summary: ")
+    self.print_message(f"{self.net.name} network summary: ")
     params_table = PrettyTable(["Name", "#", "Trainable"])
     all_params = 0
     trainable_params = 0
-    for p in self.named_parameters():
+    for p in self.net.named_parameters():
       num_params = p[1].numel()
       params_table.add_row([p[0], num_params, p[1].requires_grad])
       all_params += num_params
@@ -39,19 +48,19 @@ class Chassis(nn.Module):
 
   def forward_pass(self, data, compute_loss=True):
     x, t = data
-    x = x.to(self.dev)
-    t = t.to(self.dev)
-    y = self.forward(x)
+    x = x.to(self.net.dev)
+    t = t.to(self.net.dev)
+    y = self.net.forward(x)
     if compute_loss:
-      loss = self.lossfn(y, t)
+      loss = self.net.lossfn(y, t)
       return loss, y, t
     return y, t
 
   def train_batch(self, train_data):
-    self.optimizer.zero_grad()
+    self.net.optimizer.zero_grad()
     loss,_,_ = self.forward_pass(train_data, compute_loss=True)
     loss.backward()
-    self.optimizer.step()
+    self.net.optimizer.step()
     return loss
 
   def train_epoch(self, nbatches, train_dataloader, val_dataloader):
@@ -64,20 +73,12 @@ class Chassis(nn.Module):
       val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
       batch_desc = f"Batch status V:{th.mean(val_loss):.{3}}, T:{th.mean(train_loss):.{3}}"
       batch_progress_bar.set_description(batch_desc )
-      acc += self.accuracy(output, target)
+      acc += self.net.accuracy(output, target)
     acc /= nbatches
     return acc
 
-  def accuracy(self, y, t):
-    """
-    Overload in the subclass
-    """
-    self.print_message("NOTE: accuracy function should be defined in the model file")
-    return 0
-
-
   def train(self, nepochs, nbatches, train_dataloader, val_dataloader):
-    self.to(self.dev)
+    self.net.to(self.net.dev)
     self.print_net_params()
     self.print_message("Starting training")
     epoch_progress_bar = tqdm(range(nepochs), desc="Epoch status: Acc=?", leave=True)
