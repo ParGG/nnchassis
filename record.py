@@ -13,4 +13,5 @@ class Record(object):
         self.records = pd.DataFrame(columns = self.param_names)
     
     def update(self, new_param_dict):
-        self.records = pd.concat([self.records, new_param_dict])
+        add_df = pd.DataFrame.from_dict(new_param_dict)
+        self.records = pd.concat([self.records, add_df])

@@ -37,15 +37,19 @@ class Trainer(object):
     self.record_dict = {}
     for attr in self.record_keys:
       self.record_dict[attr] = setattr(self, attr, 'NA')
-    self.training_record = Record(self.record_dict)
+    self.logs = Record(self.record_keys)
 
     if not(hasattr(self.net, 'name')):
       self.net.name = 'NEURAL NETWORK'
 
   def update_record(self):
     for attr in self.record_dict:
-      self.record_dict[attr] = getattr(self, attr)
-    self.training_record.update(self.record_dict)
+       attr_val = getattr(self, attr)
+       if th.is_tensor(attr_val):
+        #  print("akjdshflaksdjhfalikdfha", attr_val.item())
+         attr_val = attr_val.item()
+       self.record_dict[attr] = [attr_val]
+    self.logs.update(self.record_dict)
 
   def print_net_params(self):
     P.print_message(f"{self.net.name} network summary: ")
@@ -69,7 +73,6 @@ class Trainer(object):
     if compute_loss:
       loss = self.net.lossfn(y, t)
       return loss, y, t
-    self.update_record()
     return y, t
 
   def train_batch(self, train_data):
@@ -92,6 +95,7 @@ class Trainer(object):
       self.batch_val_acc = self.net.accuracy(output, target)
       acc += self.batch_val_acc
       loss += self.batch_val_loss
+      self.update_record()
     acc /= nbatches
     loss /= nbatches
     return acc, loss
@@ -106,3 +110,4 @@ class Trainer(object):
       self.epoch_val_acc, self.epoch_val_loss = self.train_epoch(nbatches, train_dataloader, val_dataloader)
       epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
+      self.update_record()
