@@ -29,9 +29,10 @@ class Trainer(object):
     self.record_keys = ["batch",
                         "epoch",
                         "batch_train_loss",
-                        "epoch_train_acc",
+                        "batch_val_loss",
+                        "batch_val_acc",
                         "epoch_val_acc",
-                        "batch_val_loss"]
+                        "epoch_val_loss"]
 
     # Initializing the record
     self.record_dict = {}
@@ -42,7 +43,13 @@ class Trainer(object):
     if not(hasattr(self.net, 'name')):
       self.net.name = 'NEURAL NETWORK'
 
+  def plot(self, params=None):
+    self.logs.plot(params)
+
   def update_record(self):
+    """
+    Update the record
+    """
     for attr in self.record_dict:
        attr_val = getattr(self, attr)
        if th.is_tensor(attr_val):
@@ -52,6 +59,9 @@ class Trainer(object):
     self.logs.update(self.record_dict)
 
   def print_net_params(self):
+    """
+    Function that describes the trainable parameters of the network
+    """
     P.print_message(f"{self.net.name} network summary: ")
     params_table = PrettyTable(["Name", "#", "Trainable"])
     all_params = 0
@@ -85,22 +95,29 @@ class Trainer(object):
   def train_epoch(self, nbatches, train_dataloader, val_dataloader):
     batch_progress_bar = tqdm(range(nbatches), desc="Batch status", leave=False)
     acc, loss = 0, 0
-    for self.batch in batch_progress_bar:
+    for idx in batch_progress_bar:
       train_data = next(iter(train_dataloader))
       val_data = next(iter(val_dataloader))
+      # Training batch
       self.batch_train_loss = self.train_batch(train_data)
+      # Check validation performance
       self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
-      batch_desc = f"Batch status V:{th.mean(self.batch_val_loss):.{3}}, T:{th.mean(self.batch_train_loss):.{3}}"
-      batch_progress_bar.set_description(batch_desc )
       self.batch_val_acc = self.net.accuracy(output, target)
+      self.batch = self.epoch*self.nbatches + idx
       acc += self.batch_val_acc
       loss += self.batch_val_loss
       self.update_record()
+      # Update progress bar
+      batch_desc = f"Batch status V:{th.mean(self.batch_val_loss):.{3}}, T:{th.mean(self.batch_train_loss):.{3}}"
+      batch_progress_bar.set_description(batch_desc )
+
     acc /= nbatches
     loss /= nbatches
     return acc, loss
 
   def train(self, nepochs, nbatches, train_dataloader, val_dataloader):
+    self.nepochs = nepochs
+    self.nbatches = nbatches
     self.net.to(self.net.dev)
     self.print_net_params()
     P.print_message("Starting training")
