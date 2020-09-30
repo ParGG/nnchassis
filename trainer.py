@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 from prettytable import PrettyTable
 from collections import OrderedDict
 
-from utils import PrintUtils as P
+from .utils import PrintUtils as P
 from record import Record
 
 # TODO
