@@ -7,7 +7,7 @@ from prettytable import PrettyTable
 from collections import OrderedDict
 
 from .utils import PrintUtils as P
-from record import Record
+from .record import Record
 
 # TODO
 # 1. Add recording functions to track progress of accuracy and loss
