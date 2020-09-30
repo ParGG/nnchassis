@@ -6,8 +6,11 @@ from tqdm.auto import tqdm
 from prettytable import PrettyTable
 from collections import OrderedDict
 
+from utils import PrintUtils as P
+from record import Record
+
 # TODO
-# 1. Add plotting functions to track progress of accuracy and loss
+# 1. Add recording functions to track progress of accuracy and loss
 
 # Add callbacks to enable
 # 1. Early stopping
@@ -22,18 +25,30 @@ class Trainer(object):
   """
   def __init__(self, net):
     super().__init__()
-    self.net = net 
+    self.net = net
+    self.record_keys = ["batch",
+                        "epoch",
+                        "batch_train_loss",
+                        "epoch_train_acc",
+                        "epoch_val_acc",
+                        "batch_val_loss"]
 
-  def print_line(self):
-    print("-"*80)
+    # Initializing the record
+    self.record_dict = {}
+    for attr in self.record_keys:
+      self.record_dict[attr] = setattr(self, attr, 'NA')
+    self.training_record = Record(self.record_dict)
 
-  def print_message(self, message):
-    self.print_line()
-    print(message)
-    self.print_line()
+    if not(hasattr(self.net, 'name')):
+      self.net.name = 'NEURAL NETWORK'
+
+  def update_record(self):
+    for attr in self.record_dict:
+      self.record_dict[attr] = getattr(self, attr)
+    self.training_record.update(self.record_dict)
 
   def print_net_params(self):
-    self.print_message(f"{self.net.name} network summary: ")
+    P.print_message(f"{self.net.name} network summary: ")
     params_table = PrettyTable(["Name", "#", "Trainable"])
     all_params = 0
     trainable_params = 0
@@ -44,7 +59,7 @@ class Trainer(object):
       if p[1].requires_grad:
         trainable_params += num_params
     print(params_table)
-    self.print_message(f"Number of parameters = {all_params}, Trainable parameters = {trainable_params}")
+    P.print_message(f"Number of parameters = {all_params}, Trainable parameters = {trainable_params}")
 
   def forward_pass(self, data, compute_loss=True):
     x, t = data
@@ -54,36 +69,40 @@ class Trainer(object):
     if compute_loss:
       loss = self.net.lossfn(y, t)
       return loss, y, t
+    self.update_record()
     return y, t
 
   def train_batch(self, train_data):
     self.net.optimizer.zero_grad()
-    loss,_,_ = self.forward_pass(train_data, compute_loss=True)
-    loss.backward()
+    self.batch_train_loss,_,_ = self.forward_pass(train_data, compute_loss=True)
+    self.batch_train_loss.backward()
     self.net.optimizer.step()
-    return loss
+    return self.batch_train_loss
 
   def train_epoch(self, nbatches, train_dataloader, val_dataloader):
     batch_progress_bar = tqdm(range(nbatches), desc="Batch status", leave=False)
-    acc = 0
-    for _ in batch_progress_bar:
+    acc, loss = 0, 0
+    for self.batch in batch_progress_bar:
       train_data = next(iter(train_dataloader))
       val_data = next(iter(val_dataloader))
-      train_loss = self.train_batch(train_data)
-      val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
-      batch_desc = f"Batch status V:{th.mean(val_loss):.{3}}, T:{th.mean(train_loss):.{3}}"
+      self.batch_train_loss = self.train_batch(train_data)
+      self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
+      batch_desc = f"Batch status V:{th.mean(self.batch_val_loss):.{3}}, T:{th.mean(self.batch_train_loss):.{3}}"
       batch_progress_bar.set_description(batch_desc )
-      acc += self.net.accuracy(output, target)
+      self.batch_val_acc = self.net.accuracy(output, target)
+      acc += self.batch_val_acc
+      loss += self.batch_val_loss
     acc /= nbatches
-    return acc
+    loss /= nbatches
+    return acc, loss
 
   def train(self, nepochs, nbatches, train_dataloader, val_dataloader):
     self.net.to(self.net.dev)
     self.print_net_params()
-    self.print_message("Starting training")
+    P.print_message("Starting training")
     epoch_progress_bar = tqdm(range(nepochs), desc="Epoch status: Acc=?", leave=True)
 
-    for _ in epoch_progress_bar:
-      acc = self.train_epoch(nbatches, train_dataloader, val_dataloader)
-      epoch_desc = f"Current accuracy: {acc:3.2f}% # Progress: "
+    for self.epoch in epoch_progress_bar:
+      self.epoch_val_acc, self.epoch_val_loss = self.train_epoch(nbatches, train_dataloader, val_dataloader)
+      epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
