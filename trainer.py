@@ -93,7 +93,7 @@ class Trainer(object):
     return self.batch_train_loss
 
   def train_epoch(self, nbatches, train_dataloader, val_dataloader):
-    batch_progress_bar = tqdm(range(nbatches), desc="Batch status", leave=False)
+    batch_progress_bar = tqdm(range(nbatches), desc="Epoch status", leave=False)
     acc, loss = 0, 0
     for idx in batch_progress_bar:
       train_data = next(iter(train_dataloader))
@@ -108,7 +108,9 @@ class Trainer(object):
       loss += self.batch_val_loss
       self.update_record()
       # Update progress bar
-      batch_desc = f"Batch status V:{th.mean(self.batch_val_loss):.{3}}, T:{th.mean(self.batch_train_loss):.{3}}"
+      batch_desc = f"Epoch status ValAcc:{th.mean(self.batch_val_acc):.{3}}, \
+                    TrainLoss:{th.mean(self.batch_train_loss):.{3}}, \
+                    TrainLoss:{th.mean(self.batch_train_loss):.{3}}"
       batch_progress_bar.set_description(batch_desc )
 
     acc /= nbatches
