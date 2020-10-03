@@ -109,7 +109,7 @@ class Trainer(object):
       self.update_record()
       # Update progress bar
       batch_desc = f"Epoch status ValAcc:{th.mean(self.batch_val_acc):.{3}}, \
-                    TrainLoss:{th.mean(self.batch_train_loss):.{3}}, \
+                    ValLoss:{th.mean(self.batch_val_loss):.{3}}, \
                     TrainLoss:{th.mean(self.batch_train_loss):.{3}}"
       batch_progress_bar.set_description(batch_desc )
 
