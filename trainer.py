@@ -108,7 +108,7 @@ class Trainer(object):
       loss += self.batch_val_loss
       self.update_record()
       # Update progress bar
-      batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):3.1}}%, \
+      batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):3.1}%, \
                     ValLoss:{th.mean(self.batch_val_loss):.{2}}, \
                     TrainLoss:{th.mean(self.batch_train_loss):.{2}}"
       batch_progress_bar.set_description(batch_desc )
