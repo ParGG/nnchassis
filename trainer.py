@@ -90,8 +90,9 @@ class Trainer(object):
     self.batch_train_loss,_,_ = self.forward_pass(train_data, compute_loss=True)
     self.batch_train_loss.backward()
     # Clipping gradients
-    nn.utils.clip_grad_norm_(self.net.parameters(), 
-                             self.net.clip_norm)
+    if hasattr(self.net, "clip_norm"):
+      nn.utils.clip_grad_norm_(self.net.parameters(), 
+                               self.net.clip_norm)
     self.net.optimizer.step()
     return self.batch_train_loss
 
