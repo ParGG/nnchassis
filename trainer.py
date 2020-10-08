@@ -108,7 +108,7 @@ class Trainer(object):
       loss += self.batch_val_loss
       self.update_record()
       # Update progress bar
-      batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):.{1}}%, \
+      batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):3.1f}%, \
                     ValLoss:{th.mean(self.batch_val_loss):.{2}}, \
                     TrainLoss:{th.mean(self.batch_train_loss):.{2}}"
       batch_progress_bar.set_description(batch_desc )
@@ -127,6 +127,9 @@ class Trainer(object):
 
     for self.epoch in epoch_progress_bar:
       self.epoch_val_acc, self.epoch_val_loss = self.train_epoch(nbatches, train_dataloader, val_dataloader)
+      # Update the learning rate if val_loss is stagnant
+      if hasattr(self.net, "scheduler"):
+        self.net.scheduler.step(self.epoch_val_loss)
       epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
       self.update_record()
