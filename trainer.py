@@ -108,8 +108,8 @@ class Trainer(object):
       self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
       self.batch_val_acc = self.net.accuracy(output, target)
       self.batch = self.epoch*self.nbatches + idx
-      acc += self.batch_val_acc.detach()
-      loss += self.batch_val_loss.detach()
+      acc += self.batch_val_acc.item()
+      loss += self.batch_val_loss.item()
       self.update_record()
       # Update progress bar
       batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):3.1f}%, \
