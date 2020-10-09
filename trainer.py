@@ -9,15 +9,11 @@ from collections import OrderedDict
 from .utils import PrintUtils as P
 from .record import Record
 
-# TODO
-# 1. Add recording functions to track progress of accuracy and loss
-
-# Add callbacks to enable
+# Enable
 # 1. Early stopping
-# 2. Learning rate scheduler
-# 3. Save model 
-# 4. Reload model
-# 5. Change generator properties
+# 2. Save model 
+# 3. Reload model
+# 4. Change generator properties
 
 class Trainer(object):
   """
@@ -32,7 +28,8 @@ class Trainer(object):
                         "batch_val_loss",
                         "batch_val_acc",
                         "epoch_val_acc",
-                        "epoch_val_loss"]
+                        "epoch_val_loss",
+                        "lr"]
 
     # Initializing the record
     self.record_dict = {}
@@ -46,10 +43,18 @@ class Trainer(object):
   def plot(self, params=None):
     self.logs.plot(params)
 
+  def record_lr(self):
+    l = 0
+    for idx,p in enumerate(self.net.optimizer.param_groups):
+      l += p['lr']
+    self.lr = l/(idx+1)
+
   def update_record(self):
     """
     Update the record
     """
+    self.record_lr()
+
     for attr in self.record_dict:
        attr_val = getattr(self, attr)
        if th.is_tensor(attr_val):
