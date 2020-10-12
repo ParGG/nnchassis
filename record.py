@@ -41,3 +41,7 @@ class Record(object):
             imgpath = os.path.join(self.savefoldername,f"{p}.png")
             plt.savefig(imgpath)
         plt.show()
+
+    def savelogs(self):
+        P.print_message("Saving training logs...")
+        self.records.to_pickle(os.path.join(self.savefoldername,"records.pickle"))

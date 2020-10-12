@@ -142,3 +142,6 @@ class Trainer(object):
       epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
       self.update_record()
+    
+    self.logs.savelogs()
+    P.print_message("Complete!")
