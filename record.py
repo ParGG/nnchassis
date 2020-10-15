@@ -37,11 +37,11 @@ class Record(object):
                 user_ip = input("Do you want to add new param name to plot list: ")
 
         for p in params:
-            self.records.plot(x=x_param, y=p)
-            imgpath = os.path.join(self.savefoldername,f"{p}.png")
-            plt.savefig(imgpath)
-        plt.show()
+            if p is not x_param:
+                self.records.plot(x=x_param, y=p, grid=True)
+                imgpath = os.path.join(self.savefoldername,f"{p}.png")
+                plt.savefig(imgpath)
+                plt.close()
 
     def savelogs(self):
-        P.print_message("Saving training logs...")
         self.records.to_pickle(os.path.join(self.savefoldername,"records.pickle"))

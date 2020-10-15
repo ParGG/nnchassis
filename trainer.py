@@ -22,20 +22,20 @@ class Trainer(object):
   def __init__(self, net):
     super().__init__()
     self.net = net
-    self.record_keys = ["batch",
-                        "epoch",
-                        "batch_train_loss",
-                        "batch_val_loss",
-                        "batch_val_acc",
-                        "epoch_val_acc",
-                        "epoch_val_loss",
-                        "lr"]
+    self.record_dict = {"batch":0,
+                        "epoch":0,
+                        "batch_train_loss":0,
+                        "batch_val_loss":0,
+                        "batch_val_acc":0,
+                        "epoch_val_acc":0,
+                        "epoch_val_loss":0,
+                        "lr":self.record_lr()}
 
-    # Initializing the record
-    self.record_dict = {}
-    for attr in self.record_keys:
-      self.record_dict[attr] = setattr(self, attr, 'NA')
-    self.logs = Record(self.record_keys)
+    # # Initializing the record
+    # self.record_dict = {}
+    for attr in self.record_dict.keys():
+      setattr(self, attr, self.record_dict[attr])
+    self.logs = Record(self.record_dict.keys())
 
     if not(hasattr(self.net, 'name')):
       self.net.name = 'NEURAL NETWORK'
@@ -91,7 +91,10 @@ class Trainer(object):
     return y, t
 
   def train_batch(self, train_data):
-    self.net.optimizer.zero_grad()
+    # Below is more efficient than self.net.optimizer.zero_grad()
+    # https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+    for param in self.net.parameters():
+      param.grad = None
     self.batch_train_loss,_,_ = self.forward_pass(train_data, compute_loss=True)
     self.batch_train_loss.backward()
     # Clipping gradients
@@ -109,13 +112,15 @@ class Trainer(object):
       val_data = next(iter(val_dataloader))
       # Training batch
       self.batch_train_loss = self.train_batch(train_data)
-      # Check validation performance
-      self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
+
+      with th.no_grad():
+        # Check validation performance with grads disabled
+        self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
+
       self.batch_val_acc = self.net.accuracy(output, target)
       self.batch = self.epoch*self.nbatches + idx
       acc += self.batch_val_acc.detach()
       loss += self.batch_val_loss.detach()
-      self.update_record()
       # Update progress bar
       batch_desc = f"ValAcc:{th.mean(self.batch_val_acc):3.1f}%, \
                     ValLoss:{th.mean(self.batch_val_loss):.{2}}, \
@@ -141,7 +146,31 @@ class Trainer(object):
         self.net.scheduler.step(self.epoch_val_loss)
       epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
-      self.update_record()
     
-    self.logs.savelogs()
-    P.print_message("Complete!")
+      self.update_record()
+      self.logs.savelogs()
+      self.plot(self.record_dict.keys())
+    P.print_message("Training complete!")
+
+  def test(self, test_dataloader):
+    self.net.to(self.net.dev)
+    acc, loss, idx = 0,0,0
+    # P.print_message(f"Testing started")
+    nbatches = int(len(test_dataloader.dataset)/test_dataloader.batch_size)
+    test_progress_bar = tqdm((range(nbatches)), desc="Testing: Acc=?", leave=True)
+
+    with th.no_grad():
+      # for idx,test_data in enumerate(test_dataloader):
+      for _ in test_progress_bar:
+        test_data = next(iter(test_dataloader))
+        val_loss,output,target = self.forward_pass(test_data, compute_loss=True)
+        val_acc = self.net.accuracy(output, target)
+        acc += val_acc.detach()
+        loss += val_loss.detach()
+        idx+=1
+        test_desc = f"Current accuracy: {acc/idx:3.2f}% # Progress: "
+        test_progress_bar.set_description(test_desc)
+
+      acc /= idx
+      loss /= idx
+    P.print_message(f"Testing complete, accuracy is {acc:3.2f}% and loss is {loss:{.2}}!")
