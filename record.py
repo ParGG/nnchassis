@@ -1,8 +1,10 @@
+import torch as th
 import pandas as pd
 import matplotlib.pyplot as plt
 from .utils import PrintUtils as P
 import os
 import datetime
+import pickle
 
 class Record(object):
     """
@@ -38,10 +40,18 @@ class Record(object):
 
         for p in params:
             if p is not x_param:
-                self.records.plot(x=x_param, y=p, grid=True)
+                ax=self.records.plot(x=x_param, y=p, grid=True)
+                plt.grid(b=True, which='minor', linestyle='--')
                 imgpath = os.path.join(self.savefoldername,f"{p}.png")
-                plt.savefig(imgpath)
+                ax.minorticks_on()
+                plt.savefig(imgpath, dpi=300)
                 plt.close()
 
     def savelogs(self):
         self.records.to_pickle(os.path.join(self.savefoldername,"records.pickle"))
+
+    # pickling does not work with jit -.-    
+    # def savenet(self, net=None, net_name="net"):
+    #     if net is not None:
+    #         fname= os.path.join(self.savefoldername, f"{net_name}.pt")
+    #         th.save(net, fname)

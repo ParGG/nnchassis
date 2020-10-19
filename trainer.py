@@ -32,7 +32,6 @@ class Trainer(object):
                         "lr":self.record_lr()}
 
     # # Initializing the record
-    # self.record_dict = {}
     for attr in self.record_dict.keys():
       setattr(self, attr, self.record_dict[attr])
     self.logs = Record(self.record_dict.keys())
@@ -58,10 +57,10 @@ class Trainer(object):
     for attr in self.record_dict:
        attr_val = getattr(self, attr)
        if th.is_tensor(attr_val):
-        #  print("akjdshflaksdjhfalikdfha", attr_val.item())
          attr_val = attr_val.item()
        self.record_dict[attr] = [attr_val]
     self.logs.update(self.record_dict)
+    # self.logs.savenet(net=self.net, net_name="net")
 
   def print_net_params(self):
     """
@@ -126,6 +125,7 @@ class Trainer(object):
                     ValLoss:{th.mean(self.batch_val_loss):.{2}}, \
                     TrainLoss:{th.mean(self.batch_train_loss):.{2}}"
       batch_progress_bar.set_description(batch_desc )
+      self.update_record()
 
     acc /= nbatches
     loss /= nbatches
@@ -147,7 +147,6 @@ class Trainer(object):
       epoch_desc = f"Current accuracy: {self.epoch_val_acc:3.2f}% # Progress: "
       epoch_progress_bar.set_description(epoch_desc)
     
-      self.update_record()
       self.logs.savelogs()
       self.plot(self.record_dict.keys())
     P.print_message("Training complete!")
@@ -168,9 +167,8 @@ class Trainer(object):
         acc += val_acc.detach()
         loss += val_loss.detach()
         idx+=1
-        test_desc = f"Current accuracy: {acc/idx:3.2f}% # Progress: "
+        test_desc = f"Testing accuracy: {acc/idx:3.2f}% # Progress: "
         test_progress_bar.set_description(test_desc)
 
       acc /= idx
       loss /= idx
-    P.print_message(f"Testing complete, accuracy is {acc:3.2f}% and loss is {loss:{.2}}!")
