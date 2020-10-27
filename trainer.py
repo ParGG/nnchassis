@@ -113,8 +113,10 @@ class Trainer(object):
       self.batch_train_loss = self.train_batch(train_data)
 
       with th.no_grad():
+        self.net.eval()
         # Check validation performance with grads disabled
         self.batch_val_loss,output,target = self.forward_pass(val_data, compute_loss=True)
+        self.net.train()
 
       self.batch_val_acc = self.net.accuracy(output, target)
       self.batch = self.epoch*self.nbatches + idx
@@ -158,6 +160,7 @@ class Trainer(object):
     nbatches = int(len(test_dataloader.dataset)/test_dataloader.batch_size)
     test_progress_bar = tqdm((range(nbatches)), desc="Testing: Acc=?", leave=True)
 
+    self.net.eval() # put in eval mode
     with th.no_grad():
       # for idx,test_data in enumerate(test_dataloader):
       for _ in test_progress_bar:
@@ -172,3 +175,4 @@ class Trainer(object):
 
       acc /= idx
       loss /= idx
+    self.net.train()
