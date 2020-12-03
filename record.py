@@ -8,7 +8,7 @@ import pickle
 
 class Record(object):
     """
-    params: Dictionary of parameters to record
+    args: Dictionary of parameters to record
           {param_name:param}
           where param_name is the name for it in the logger
                 param is the parameter that needs to be logged
@@ -38,7 +38,7 @@ class Record(object):
                 params += [str(input("Enter param name to plot: "))]
                 user_ip = input("Do you want to add new param name to plot list: ")
 
-        for p in params:
+        for p in args:
             if p is not x_param:
                 ax=self.records.plot(x=x_param, y=p, grid=True)
                 plt.grid(b=True, which='minor', linestyle='--')
