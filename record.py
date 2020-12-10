@@ -38,7 +38,7 @@ class Record(object):
                 params += [str(input("Enter param name to plot: "))]
                 user_ip = input("Do you want to add new param name to plot list: ")
 
-        for p in args:
+        for p in params:
             if p is not x_param:
                 ax=self.records.plot(x=x_param, y=p, grid=True)
                 plt.grid(b=True, which='minor', linestyle='--')

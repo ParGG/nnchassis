@@ -105,7 +105,7 @@ class Trainer(object):
         # https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
         for param in self.net.parameters():
             param.grad = None
-        self.batch_train_loss, _, _ = self.forward_pass(train_data, compute_loss=True)
+        self.batch_train_loss, *_ = self.forward_pass(train_data, compute_loss=True)
         self.batch_train_loss.backward()
         # Clipping gradients
         if hasattr(self.net, "clip_norm"):
